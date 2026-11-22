@@ -1,0 +1,335 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TipoLocalizacao {
+  SECAO
+  MODULO
+  PRATELEIRA
+  POSICAO
+}
+model Secao {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  codigo String
+  nome String
+  descricao String?
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  modulos Modulo[]
+  qrCode QRCode?
+  @@unique([unidadeId, codigo])
+  @@index([empresaId, unidadeId])
+}
+model Modulo {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  secaoId String
+  codigo String
+  nome String?
+  descricao String?
+  ordem Int
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  secao Secao @relation(fields: [secaoId], references: [id])
+  prateleiras Prateleira[]
+  qrCode QRCode?
+  @@unique([unidadeId, codigo])
+  @@index([empresaId, unidadeId, secaoId])
+}
+model Prateleira {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  moduloId String
+  codigo String
+  nome String?
+  ordem Int
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  modulo Modulo @relation(fields: [moduloId], references: [id])
+  posicoes Posicao[]
+  qrCode QRCode?
+  @@unique([unidadeId, codigo])
+  @@index([empresaId, unidadeId, moduloId])
+}
+model Posicao {
+  saldos Saldo[]
+  movimentacoesOrigem Movimentacao[] @relation("Origem")
+  movimentacoesDestino Movimentacao[] @relation("Destino")
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  prateleiraId String
+  codigo String
+  descricao String?
+  ordem Int
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  prateleira Prateleira @relation(fields: [prateleiraId], references: [id])
+  itens ItemPosicao[]
+  qrCode QRCode?
+  @@unique([unidadeId, codigo])
+  @@index([empresaId, unidadeId, prateleiraId])
+}
+model ItemPosicao {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  itemId String
+  posicaoId String
+  observacao String?
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+  posicao Posicao @relation(fields: [posicaoId], references: [id])
+  @@unique([itemId, posicaoId])
+  @@index([empresaId, unidadeId, posicaoId])
+}
+model QRCode {
+  id String @id @default(cuid())
+  empresaId String
+  token String @unique
+  tipo TipoLocalizacao
+  secaoId String? @unique
+  moduloId String? @unique
+  prateleiraId String? @unique
+  posicaoId String? @unique
+  versao Int @default(1)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  secao Secao? @relation(fields: [secaoId], references: [id])
+  modulo Modulo? @relation(fields: [moduloId], references: [id])
+  prateleira Prateleira? @relation(fields: [prateleiraId], references: [id])
+  posicao Posicao? @relation(fields: [posicaoId], references: [id])
+  @@index([empresaId])
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+enum Papel {
+  ADMIN
+  GERENTE
+  ESTOQUISTA
+}
+enum TipoCodigoBarras {
+  EAN13
+  EAN8
+  UPC
+  CODE128
+  OUTRO
+}
+model Empresa {
+  saldos Saldo[]
+  movimentacoes Movimentacao[]
+  motivosQuebra MotivoQuebra[]
+  motivosQuebraPadrao MotivosQuebraPadrao?
+  id String @id @default(cuid())
+  clerkOrgId String @unique
+  nome String
+  cnpj String?
+  ativa Boolean @default(true)
+  proxCodigo Int @default(1)
+  criadoEm DateTime @default(now())
+  qrcodes QRCode[]
+  secoes Secao[]
+  modulos Modulo[]
+  prateleiras Prateleira[]
+  posicoes Posicao[]
+  alocacoes ItemPosicao[]
+  unidades Unidade[]
+  usuarios Usuario[]
+  categorias Categoria[]
+  itens Item[]
+  codigosBarras CodigoBarras[]
+}
+model Unidade {
+  saldos Saldo[]
+  movimentacoes Movimentacao[]
+  secoes Secao[]
+  modulos Modulo[]
+  prateleiras Prateleira[]
+  posicoes Posicao[]
+  alocacoes ItemPosicao[]
+
+  id String @id @default(cuid())
+  empresaId String
+  nome String
+  cnpj String?
+  ativa Boolean @default(true)
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  @@index([empresaId])
+}
+model Usuario {
+  movimentacoes Movimentacao[]
+  removidoEm DateTime?
+  nome String?
+  id String @id @default(cuid())
+  clerkId String
+  empresaId String
+  papel Papel @default(ESTOQUISTA)
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  @@unique([clerkId, empresaId])
+  @@index([empresaId])
+}
+model Categoria {
+  id String @id @default(cuid())
+  empresaId String
+  nome String
+  descricao String?
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  itens Item[]
+  @@unique([empresaId, nome])
+  @@index([empresaId])
+}
+model Item {
+  saldos Saldo[]
+  movimentacoes Movimentacao[]
+  posicoes ItemPosicao[]
+  id String @id @default(cuid())
+  empresaId String
+  categoriaId String?
+  codigoInterno String
+  nome String
+  descricao String?
+  unidadeMedida String @default("UN")
+  valorUnitario Decimal? @db.Decimal(12, 2)
+  altoValor Boolean @default(false)
+  imagemUrl String?
+  ativo Boolean @default(true)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  categoria Categoria? @relation(fields: [categoriaId], references: [id])
+  codigosBarras CodigoBarras[]
+  @@unique([empresaId, codigoInterno])
+  @@index([empresaId, categoriaId])
+  @@index([empresaId, nome])
+}
+model CodigoBarras {
+  id String @id @default(cuid())
+  empresaId String
+  itemId String
+  codigo String
+  tipo TipoCodigoBarras @default(EAN13)
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  @@unique([empresaId, codigo])
+  @@index([itemId])
+}
+
+enum TipoMovimentacao {
+  ENTRADA
+  SAIDA
+  QUEBRA
+  TRANSFERENCIA
+  AJUSTE_POSITIVO
+  AJUSTE_NEGATIVO
+  ESTORNO
+}
+
+model Saldo {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  itemId String
+  posicaoId String?
+  quantidade Decimal @db.Decimal(14, 3) @default(0)
+  atualizadoEm DateTime @updatedAt
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+  posicao Posicao? @relation(fields: [posicaoId], references: [id], onDelete: Restrict)
+  @@unique([itemId, unidadeId, posicaoId])
+  @@index([empresaId, unidadeId])
+  @@index([posicaoId])
+}
+
+model MotivoQuebra {
+  id String @id @default(cuid())
+  empresaId String
+  nome String
+  descricao String?
+  ativo Boolean @default(true)
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  deletadoEm DateTime?
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  movimentacoes Movimentacao[]
+  @@index([empresaId])
+}
+
+model Movimentacao {
+  id String @id @default(cuid())
+  empresaId String
+  unidadeId String
+  itemId String
+  tipo TipoMovimentacao
+  quantidade Decimal @db.Decimal(14, 3)
+  posicaoOrigemId String?
+  posicaoDestinoId String?
+  motivoQuebraId String?
+  justificativa String?
+  observacao String?
+  referencia String?
+  saldoOrigemApos Decimal? @db.Decimal(14, 3)
+  saldoDestinoApos Decimal? @db.Decimal(14, 3)
+  estornoDeId String? @unique
+  chaveIdempotencia String
+  usuarioId String
+  criadoEm DateTime @default(now())
+  empresa Empresa @relation(fields: [empresaId], references: [id])
+  unidade Unidade @relation(fields: [unidadeId], references: [id])
+  item Item @relation(fields: [itemId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  posicaoOrigem Posicao? @relation("Origem", fields: [posicaoOrigemId], references: [id], onDelete: Restrict)
+  posicaoDestino Posicao? @relation("Destino", fields: [posicaoDestinoId], references: [id], onDelete: Restrict)
+  motivoQuebra MotivoQuebra? @relation(fields: [motivoQuebraId], references: [id], onDelete: Restrict)
+  estornoDe Movimentacao? @relation("Estorno", fields: [estornoDeId], references: [id], onDelete: Restrict)
+  estornadaPor Movimentacao? @relation("Estorno")
+  fotos AvariaFoto[]
+  @@unique([empresaId, chaveIdempotencia])
+  @@index([empresaId, unidadeId, criadoEm])
+  @@index([itemId, criadoEm])
+}
+
+model AvariaFoto {
+  id String @id @default(cuid())
+  empresaId String
+  movimentacaoId String
+  url String
+  fileId String
+  criadoEm DateTime @default(now())
+  movimentacao Movimentacao @relation(fields: [movimentacaoId], references: [id], onDelete: Cascade)
+  @@index([movimentacaoId])
+}
+
+model MotivosQuebraPadrao {
+  empresaId String @id
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+}

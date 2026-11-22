@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env*
+!.env.example
+coverage/
+*.tsbuildinfo
+.npm-cache/
+.teste-postgres/
+.tmp/
+tmp/
+output/
