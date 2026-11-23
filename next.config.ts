@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
-const fontesPdfkit = [
-  "./node_modules/pdfkit/js/data/*.afm",
-  "./node_modules/pdfkit/js/standard-fonts/*.cjs",
+// Inclui todos os arquivos do pdfkit (fontes e chunks carregados dinamicamente)
+const arquivosPdfkit = [
+  "./node_modules/pdfkit/package.json",
+  "./node_modules/pdfkit/js/**/*",
 ];
 
 const config: NextConfig = {
@@ -11,8 +12,8 @@ const config: NextConfig = {
   serverExternalPackages: ["@react-pdf/renderer", "qrcode", "pdfkit"],
   outputFileTracingRoot: path.resolve(process.cwd()),
   outputFileTracingIncludes: {
-    "/api/pdf/etiquetas": fontesPdfkit,
-    "/api/pdf/ficha/[tipo]/[id]": fontesPdfkit,
+    "/api/pdf/etiquetas": arquivosPdfkit,
+    "/api/pdf/ficha/[tipo]/[id]": arquivosPdfkit,
   },
 };
 
